@@ -110,6 +110,12 @@
             color: #ccc;
             font-style: italic;
         }
+
+        .result-area.error {
+            color: #c0392b;
+            border-color: #e74c3c;
+            background: #fdf0ef;
+        }
     </style>
 </head>
 <body>
@@ -138,26 +144,49 @@
         const partInput = document.getElementById('partInput');
         const resultArea = document.getElementById('resultArea');
 
-        // TODO: Replace echo logic with:
-        //   1. POST input to backend /parse endpoint
-        //   2. Parse JSON response
-        //   3. Display formatted response in result area
-        //   4. Handle errors gracefully
-        function handleSubmit() {
+        const submitButton = document.querySelector('button');
+
+        function setResult(text, state) {
+            resultArea.textContent = text;
+            resultArea.className = 'result-area' + (state ? ' ' + state : '');
+        }
+
+        async function handleSubmit() {
             const inputText = partInput.value.trim();
 
             if (!inputText) {
-                resultArea.textContent = 'Please enter a part description';
-                resultArea.classList.remove('empty');
+                setResult('Please enter a part description.', '');
                 return;
             }
 
-            // Echo the input (temporary — replace with backend call)
-            resultArea.textContent = inputText;
-            resultArea.classList.remove('empty');
+            submitButton.disabled = true;
+            setResult('Loading...', 'empty');
 
-            partInput.value = '';
-            partInput.focus();
+            try {
+                const response = await fetch('http://localhost:8000/parse', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ text: inputText }),
+                });
+
+                if (!response.ok) {
+                    throw new Error(`Server error: ${response.status}`);
+                }
+
+                const data = await response.json();
+                // TODO: data.echo becomes a parsed JSON order form once the
+                // backend replaces the echo with a real Claude API call.
+                setResult(data.echo, '');
+                partInput.value = '';
+                partInput.focus();
+            } catch {
+                setResult(
+                    'Could not reach the backend. Is it running on localhost:8000?',
+                    'error'
+                );
+            } finally {
+                submitButton.disabled = false;
+            }
         }
 
         partInput.addEventListener('keydown', function(e) {
