@@ -1,0 +1,11 @@
+{
+  "part_type": "gusset",
+  "tube_size_a": "2x1",
+  "tube_size_b": "2x1",
+  "angle_deg": 60,
+  "holes_per_side": 4,
+  "hole_spec": "#10",
+  "hole_pattern": "maxtube_grid",
+  "thickness_in": 0.125,
+  "pocketed": false
+}

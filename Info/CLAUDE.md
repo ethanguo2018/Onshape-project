@@ -52,6 +52,15 @@ CAD Output
 5. Deterministic template generates CAD geometry
 6. Result returned to frontend and displayed
 
+## Order Form Schemas
+
+JSON Schemas live in `schemas/`. Each file defines the contract the Claude parser must fill and the validator must check before geometry generation.
+
+- `schemas/gusset.schema.json` — JSON Schema draft 2020-12 for gusset order forms
+- `schemas/gusset.example.json` — one valid filled-in example
+
+**Note:** enum values and numeric bounds are placeholders pending Peter's review.
+
 ## Next Steps
 - Implement backend parser
 - Build validator

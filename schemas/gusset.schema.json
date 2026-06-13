@@ -1,0 +1,76 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "gusset.schema.json",
+  "title": "Gusset Order Form",
+  "description": "Order form produced by the Claude parser and validated before CAD geometry generation. Enum values and numeric bounds are placeholders pending Peter's review.",
+  "type": "object",
+  "required": [
+    "part_type",
+    "tube_size_a",
+    "tube_size_b",
+    "angle_deg",
+    "holes_per_side",
+    "hole_spec",
+    "hole_pattern",
+    "thickness_in",
+    "pocketed"
+  ],
+  "additionalProperties": false,
+  "properties": {
+    "part_type": {
+      "title": "Part Type",
+      "description": "Discriminator field identifying this order form as a gusset.",
+      "type": "string",
+      "const": "gusset"
+    },
+    "tube_size_a": {
+      "title": "Tube Size A",
+      "description": "Cross-section of the first MAXTube arm, in inches (width x height).",
+      "type": "string",
+      "enum": ["2x1", "1x1"]
+    },
+    "tube_size_b": {
+      "title": "Tube Size B",
+      "description": "Cross-section of the second MAXTube arm, in inches (width x height).",
+      "type": "string",
+      "enum": ["2x1", "1x1"]
+    },
+    "angle_deg": {
+      "title": "Angle (degrees)",
+      "description": "Interior angle between the two tube arms, in degrees.",
+      "type": "number",
+      "minimum": 30,
+      "maximum": 150
+    },
+    "holes_per_side": {
+      "title": "Holes Per Side",
+      "description": "Number of mounting holes on each arm of the gusset.",
+      "type": "integer",
+      "minimum": 1,
+      "maximum": 6
+    },
+    "hole_spec": {
+      "title": "Hole Specification",
+      "description": "Fastener size the holes are sized for.",
+      "type": "string",
+      "enum": ["#10"]
+    },
+    "hole_pattern": {
+      "title": "Hole Pattern",
+      "description": "Layout rule for hole placement along each arm.",
+      "type": "string",
+      "enum": ["maxtube_grid", "even_spacing"]
+    },
+    "thickness_in": {
+      "title": "Thickness (inches)",
+      "description": "Material thickness of the gusset plate, in inches.",
+      "type": "number",
+      "enum": [0.090, 0.125, 0.190]
+    },
+    "pocketed": {
+      "title": "Pocketed",
+      "description": "Whether the gusset face is pocketed (weight-reduction cutouts).",
+      "type": "boolean"
+    }
+  }
+}
