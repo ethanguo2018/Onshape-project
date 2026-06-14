@@ -36,21 +36,41 @@ CAD Output
 
 ## Current Phase
 
-**Frontend Skeleton** — Building the UI for students to submit part descriptions.
+**Conversational Parser** — Multi-turn chat loop that gathers all required fields before producing a validated order form.
 
-- Single static HTML page with text input, submit button, and result display
-- Future: Will POST to `/parse` backend endpoint and display JSON response
+### Backend endpoints (`backend/main.py`)
+| Endpoint | Purpose | Status |
+|---|---|---|
+| `GET /health` | Health check | stable |
+| `POST /parse` | Echo stub (no Claude call yet) | placeholder |
+| `POST /parse-test` | One-shot Claude parse + schema validation | working |
+| `GET /test-claude` | Connectivity check | working |
+| `POST /chat-parse` | **Conversational parser** — stateless; accepts full message history each turn | **new** |
 
-**Next Phase**: Backend implementation with Claude API integration and geometry template engine.
+### `/chat-parse` design
+- **Stateless**: frontend sends the entire `messages` array each turn; backend holds no session state.
+- Request: `{"messages": [{"role": "user"|"assistant", "content": "..."}]}`
+- Claude is instructed (via system prompt) to output raw JSON in one of two shapes:
+  - `{"status": "incomplete", "message": "<clarifying question>"}` — missing fields remain
+  - `{"status": "complete", "part_type": "...", "order_form": {...}}` — all fields present
+- Backend validates `order_form` against the matching schema in `schemas/` via `jsonschema`. Validation failure loops back as `"incomplete"`.
+- System prompt is marked **PLACEHOLDER** — pending Peter+Ethan's real prompt.
 
-## Example Flow
+### Frontend pages
+| File | Purpose |
+|---|---|
+| `frontend/index.html` | Original one-shot input UI (unchanged) |
+| `frontend/chat.html` | **New** multi-turn chat UI |
 
-1. Student types: "gusset joining two 2x1 MAXTubes at 60 degrees"
-2. Frontend submits to backend `/parse`
-3. Claude API parses → `{ "type": "gusset", "tube_size": "2x1", "angle": 60 }`
-4. Backend validates
-5. Deterministic template generates CAD geometry
-6. Result returned to frontend and displayed
+`frontend/chat.html` maintains `conversation[]` in JS, appends each turn, and posts the full array to `/chat-parse`. When `status === "complete"` it renders the order form JSON in a green card and locks the input.
+
+## Example Conversational Flow
+
+1. Student types: "I need a gusset"
+2. Claude asks: "What tube sizes for each arm — 2x1 or 1x1?"
+3. Student answers → Claude asks next missing field
+4. After all fields collected → backend validates against `gusset.schema.json`
+5. Green "Order form complete" card shown with final JSON
 
 ## Order Form Schemas
 
@@ -59,9 +79,20 @@ JSON Schemas live in `schemas/`. Each file defines the contract the Claude parse
 - `schemas/gusset.schema.json` — JSON Schema draft 2020-12 for gusset order forms
 - `schemas/gusset.example.json` — one valid filled-in example
 
+`PART_SCHEMAS` is loaded at startup by globbing `schemas/*.schema.json`, so adding `motor_plate.schema.json` or `gearbox_plate.schema.json` automatically makes them available to `/chat-parse`.
+
 **Note:** enum values and numeric bounds are placeholders pending Peter's review.
 
+## Running Locally
+
+```bash
+# from repo root
+.venv/bin/uvicorn backend.main:app --reload
+# then open frontend/chat.html directly in browser
+```
+
 ## Next Steps
-- Implement backend parser
-- Build validator
-- Create parametric geometry templates
+- Replace placeholder system prompt with Peter+Ethan's real prompt
+- Add `motor_plate` and `gearbox_plate` schemas
+- Build deterministic geometry templates
+- Wire validated order form to CAD generation pipeline
