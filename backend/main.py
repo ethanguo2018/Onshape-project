@@ -189,7 +189,7 @@ complete, valid order form for an FRC robot part.
 Supported part types: {part_types}
 
 {schema_summary}
-Instructions:
+## Instructions
 1. First identify the part type from the conversation. If unclear, ask which part the \
 user wants.
 2. Once the part type is known, identify which required fields are still missing or \
@@ -200,11 +200,24 @@ question. Reference allowed values when relevant \
 4. If and only if every required field is present and valid, output the complete order \
 form.
 
-CRITICAL: Output ONLY a raw JSON object — nothing else.
+## ABSOLUTE OUTPUT RULE — NO EXCEPTIONS
+
+Every single response — including clarifying questions — MUST be a single JSON object. \
+You must NEVER reply with bare text or plain prose of any kind, not even for a simple \
+question. If you want to ask the user something, wrap it in the incomplete JSON format.
+
+CORRECT (clarifying question):
+{{"status": "incomplete", "message": "Should the holes follow the maxtube_grid pattern or even_spacing pattern?"}}
+
+INCORRECT — never do this:
+Should the holes follow the maxtube_grid pattern or even_spacing pattern?
+
+Additional rules:
 - Do NOT use markdown, backticks, or code fences of any kind
-- Do NOT write any prose, explanation, or commentary before or after the JSON
-- The very first character of your response must be {{ and the very last must be }}
+- Do NOT write any prose or commentary before or after the JSON
+- The very first character of your response MUST be {{ and the very last MUST be }}
 - Any other output format will break the parser
+
 Use exactly one of these two formats:
 
 If information is still needed:
@@ -248,8 +261,10 @@ def chat_parse(req: ChatParseRequest):
         try:
             parsed = _extract_json(raw)
         except (json.JSONDecodeError, ValueError) as e:
-            print(f"[chat-parse] JSON parse failed: {e}")
-            return {"status": "error", "message": f"Could not parse Claude's response: {e}", "raw_response": raw}
+            print(f"[chat-parse] JSON parse failed ({e}) — raw text is not JSON, treating as clarifying question")
+            if not raw.strip():
+                return {"status": "error", "message": "Claude returned an empty response.", "raw_response": raw}
+            return {"status": "incomplete", "message": raw.strip()}
 
         status = parsed.get("status")
 
